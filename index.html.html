@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Daily Habits Tracker</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Daily Habits">
+<meta name="theme-color" content="#DDE5E3">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%2317635A'/%3E%3Cpath d='M52 94l24 24 52-58' stroke='%23F3F7F5' stroke-width='16' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --mist:#DDE5E3;
+  --mist-2:#EAF0EE;
+  --paper:#FBFDFC;
+  --ink:#0F1A1E;
+  --ink-2:#4E6068;
+  --ink-3:#84969C;
+  --line:#C7D4D1;
+  --kelp:#17635A;
+  --kelp-soft:#E2EFEB;
+  --slate:#4E6068;
+  --slate-soft:#E6EAEB;
+  --sun:#E8A33D;
+  --gold:#C99A1F;
+  --tier-green:#2E8B63;
+  --tier-orange:#D2762C;
+  --tier-red:#B2453C;
+  --shadow:0 1px 0 rgba(15,26,30,.04), 0 6px 18px -12px rgba(15,26,30,.35);
+  --r:14px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--mist);
+  color:var(--ink);
+  font:400 16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.disp{font-family:"Bricolage Grotesque",-apple-system,system-ui,sans-serif}
+
+.app{max-width:520px;margin:0 auto;min-height:100vh;min-height:100dvh;position:relative}
+.view{padding:calc(var(--safe-t) + 22px) 18px calc(var(--safe-b) + 130px)}
+.view[hidden]{display:none}
+
+/* ---------- header ---------- */
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-2);display:flex;justify-content:space-between;align-items:center
+}
+.gear{
+  border:1px solid var(--line);background:var(--paper);border-radius:999px;
+  width:34px;height:34px;display:grid;place-items:center;cursor:pointer;color:var(--ink-2)
+}
+h1.dayname{
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:44px;line-height:1;
+  margin:14px 0 6px;letter-spacing:-.03em
+}
+.datestamp{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink-2);letter-spacing:.02em}
+.datestamp.past{color:#9A6E10}
+.daynav{display:flex;align-items:center;gap:7px}
+.daynav button{
+  width:27px;height:27px;padding:0;border-radius:999px;border:1px solid var(--line);background:var(--paper);
+  color:var(--ink-2);font:400 16px/1 -apple-system,system-ui,sans-serif;cursor:pointer;display:grid;place-items:center
+}
+.daynav button:disabled{opacity:.3;cursor:default}
+.daynav span{min-width:104px;text-align:center}
+
+/* ---------- progress tape (signature) ---------- */
+.tape{display:flex;gap:3px;margin:18px 0 6px;height:10px}
+.tape i{flex:1;border-radius:2px;background:#CBD8D5;transition:background .25s ease}
+.tape i.done{background:var(--kelp)}
+.tape i.missed{background:var(--slate);opacity:.45}
+.tape i.skip{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+.tape-label{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-2);letter-spacing:.04em}
+
+/* ---------- habit rows ---------- */
+.list{margin-top:22px;display:flex;flex-direction:column;gap:10px}
+.row{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;padding:12px 12px 12px 14px;
+  position:relative;overflow:hidden;transition:background .2s ease,border-color .2s ease
+}
+.row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:transparent;transition:background .2s ease}
+.row.is-done{background:var(--kelp-soft);border-color:#B9D8CF}
+.row.is-done::before{background:var(--kelp)}
+.row.is-missed{background:var(--slate-soft)}
+.row.is-missed::before{background:var(--slate)}
+.row.is-skipped{background:#EDF1F0}
+.row.is-skipped::before{background:repeating-linear-gradient(180deg,var(--ink-2) 0 5px,transparent 5px 10px)}
+.row.is-skipped .row-name{color:var(--ink-2)}
+.row-main{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}
+.row-name{font-weight:600;font-size:17px;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row.is-missed .row-name{color:var(--ink-2);text-decoration:line-through;text-decoration-thickness:1px}
+.row-meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-2);letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+.stamps{display:flex;gap:6px;flex:0 0 auto}
+.stamp{
+  width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:#fff;
+  display:grid;place-items:center;cursor:pointer;transition:transform .12s ease,background .18s ease,border-color .18s ease
+}
+.stamp svg{width:19px;height:19px;stroke:var(--ink-2);stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.stamp:active{transform:scale(.9)}
+.stamp.on-done{background:var(--kelp);border-color:var(--kelp)}
+.stamp.on-done svg{stroke:#fff}
+.stamp.on-missed{background:var(--slate);border-color:var(--slate)}
+.stamp.on-missed svg{stroke:#fff}
+.stamp.on-skip{background:var(--ink-2);border-color:var(--ink-2)}
+.stamp.on-skip svg{stroke:#fff}
+@keyframes press{0%{transform:scale(1)}45%{transform:scale(.86)}100%{transform:scale(1)}}
+.stamp.pressed{animation:press .28s ease}
+
+.divider{
+  display:flex;align-items:center;gap:10px;margin:8px 2px 0;
+  font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)
+}
+.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.note{
+  margin-top:18px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-2);
+  border-top:1px dashed var(--line);padding-top:14px;letter-spacing:.02em
+}
+.empty{
+  margin-top:36px;text-align:center;color:var(--ink-2)
+}
+.empty .disp{font-size:22px;color:var(--ink);display:block;margin-bottom:6px}
+
+/* ---------- stats ---------- */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow)}
+.card.wide{grid-column:1/-1}
+.big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:38px;line-height:1;letter-spacing:-.03em}
+.big small{font-size:16px;font-weight:700;margin-left:2px;color:var(--ink-2)}
+.card-label{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin-top:8px}
+h2.sec{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px;letter-spacing:.02em;margin:28px 0 12px;display:flex;align-items:center;gap:10px}
+h2.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.hrow{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;box-shadow:var(--shadow);margin-bottom:10px;cursor:pointer}
+.hrow.retired{background:#F2F5F4;box-shadow:none;opacity:.82}
+.hrow.retired .hrow-name{color:var(--ink-2)}
+.hrow-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.hrow-name{font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hrow-pct{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600}
+.ticks{display:flex;gap:3px;margin-top:11px}
+.ticks i{flex:1;height:22px;border-radius:3px;background:#E6EBEA;position:relative}
+.ticks i.d{background:var(--kelp)}
+.ticks i.m{background:repeating-linear-gradient(-45deg,#C2CDD1 0 3px,#DCE3E4 3px 6px)}
+.ticks i.s{background:#E4EAE9}
+.ticks i.s::after{content:"";position:absolute;left:50%;top:50%;width:7px;height:2px;border-radius:1px;background:#9AA9AE;transform:translate(-50%,-50%)}
+.ticks i.off{background:transparent;border:1px dashed #D2DCDA}
+.hrow-sub{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-2);margin-top:9px;letter-spacing:.03em;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bars{display:flex;align-items:flex-end;gap:var(--bar-gap,6px);height:104px;margin-top:10px}
+.bars button{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%;background:none;border:0;padding:0;font:inherit;cursor:pointer}
+.bars b{display:block;width:100%;background:var(--kelp);border-radius:3px 3px 0 0;min-height:2px;transition:height .35s ease}
+.bars b.thin{background:#CBD8D5}
+.bars b.gold{background:linear-gradient(180deg,#E0B23A,var(--gold))}
+.bars b.green{background:var(--tier-green)}
+.bars b.orange{background:var(--tier-orange)}
+.bars b.red{background:var(--tier-red)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-2);margin-top:11px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.bars span{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden}
+
+
+/* ---------- fab + tabs ---------- */
+.fab{
+  position:fixed;right:calc(50% - 260px + 18px);bottom:calc(var(--safe-b) + 82px);
+  width:56px;height:56px;border-radius:18px;border:0;background:var(--ink);color:#fff;
+  font-size:30px;line-height:1;display:grid;place-items:center;cursor:pointer;
+  box-shadow:0 10px 24px -10px rgba(15,26,30,.7);z-index:20
+}
+@media(max-width:556px){.fab{right:18px}}
+.fab:active{transform:scale(.94)}
+.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  background:rgba(233,239,237,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);display:flex;padding-bottom:var(--safe-b)
+}
+.tabs-inner{max-width:520px;margin:0 auto;display:flex;width:100%}
+.tab{
+  flex:1;background:none;border:0;padding:11px 0 12px;cursor:pointer;color:var(--ink-2);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  display:flex;flex-direction:column;align-items:center;gap:4px
+}
+.tab svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tab.active{color:var(--kelp)}
+
+/* ---------- sheets ---------- */
+.scrim{position:fixed;inset:0;background:rgba(15,26,30,.42);z-index:30;opacity:0;pointer-events:none;transition:opacity .22s ease}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--mist-2);
+  border-radius:22px 22px 0 0;border-top:1px solid var(--line);
+  padding:8px 18px calc(var(--safe-b) + 22px);max-width:520px;margin:0 auto;
+  transform:translateY(102%);transition:transform .28s cubic-bezier(.32,.72,0,1);
+  max-height:88dvh;overflow:auto
+}
+.sheet.open{transform:translateY(0)}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:6px auto 14px}
+.sheet h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:21px;margin:0 0 16px;letter-spacing:-.02em}
+label.fl{display:block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin:0 0 7px}
+input[type=text],input[type=time],textarea{
+  width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);
+  font:400 16px/1.3 -apple-system,system-ui,sans-serif;color:var(--ink)
+}
+input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--kelp);outline-offset:2px}
+.seg{display:flex;gap:8px;margin-top:6px}
+.seg button{
+  flex:1;padding:13px 8px;border-radius:12px;border:1px solid var(--line);background:var(--paper);
+  font:600 14px/1.2 -apple-system,system-ui,sans-serif;color:var(--ink-2);cursor:pointer;text-align:left
+}
+.seg button em{display:block;font-style:normal;font-weight:400;font-size:11.5px;color:var(--ink-2);margin-top:3px}
+.seg button.sel{background:var(--kelp);border-color:var(--kelp);color:#fff}
+.seg button.sel em{color:rgba(255,255,255,.8)}
+.field{margin-bottom:18px}
+.btn{
+  width:100%;padding:15px;border-radius:13px;border:0;background:var(--ink);color:#fff;
+  font:600 16px/1 -apple-system,system-ui,sans-serif;cursor:pointer
+}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink-2)}
+.btn.danger{background:transparent;border:1px solid #D9BFC4;color:#8E3B49}
+.btn+.btn{margin-top:9px}
+.switchrow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.switchrow p{margin:4px 0 0;font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.switchrow strong{font-size:15px;font-weight:600}
+.sw{width:52px;height:31px;border-radius:999px;border:1px solid var(--line);background:#D6DEDC;position:relative;flex:0 0 auto;cursor:pointer;transition:background .2s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:25px;height:25px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.sw.on{background:var(--kelp);border-color:var(--kelp)}
+.sw.on::after{transform:translateX(21px)}
+.hint{font-size:12.5px;color:var(--ink-2);line-height:1.5;margin:14px 0 0}
+.hint b{color:var(--ink)}
+.toast{
+  position:fixed;bottom:calc(var(--safe-b) + 96px);left:50%;transform:translate(-50%,14px);
+  background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13.5px;z-index:40;
+  opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;white-space:nowrap
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.chart-head{display:flex;flex-direction:column;align-items:stretch;gap:11px;margin-bottom:2px}
+.range{display:flex;gap:3px;background:#E4EBE9;border:1px solid var(--line);border-radius:11px;padding:3px}
+.range button{
+  flex:1;min-width:0;border:0;background:none;border-radius:8px;padding:8px 1px;cursor:pointer;color:var(--ink-2);
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase
+}
+.range button.sel{background:var(--ink);color:#fff}
+.bars b.part{background:#8FB6AC}
+.axis{display:flex;justify-content:space-between;font-size:9.5px;color:var(--ink-2);margin-top:2px}
+.axis[hidden]{display:none}
+.caption{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-2);letter-spacing:.03em;margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ TODAY ============ -->
+  <main class="view" id="v-today">
+    <div class="eyebrow">
+      <div class="daynav">
+        <button id="day-prev" aria-label="Show the previous day">&lsaquo;</button>
+        <span id="eyebrow-txt">Today</span>
+        <button id="day-next" aria-label="Show the next day">&rsaquo;</button>
+      </div>
+      <button class="gear" id="btn-settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+    <h1 class="dayname disp" id="dayname">Today</h1>
+    <div class="datestamp mono" id="datestamp"></div>
+    <div class="tape" id="tape"></div>
+    <div class="tape-label mono" id="tape-label"></div>
+    <div class="list" id="feed"></div>
+    <div class="note mono" id="weekly-note" hidden></div>
+  </main>
+
+  <!-- ============ PROGRESS ============ -->
+  <main class="view" id="v-stats" hidden>
+    <div class="eyebrow"><span>Progress</span></div>
+    <h1 class="dayname disp">How it's<br>going</h1>
+    <div class="stat-grid">
+      <div class="card"><div class="big" id="s-rate">0<small>%</small></div><div class="card-label">Done, last 30 days</div></div>
+      <div class="card"><div class="big" id="s-streak">0</div><div class="card-label" id="s-streak-l">Day perfect streak</div></div>
+      <div class="card wide">
+        <div class="chart-head">
+          <div class="card-label" style="margin:0" id="s-chart-label">This week</div>
+          <div class="range" id="s-range">
+            <button data-r="week" class="sel">Week</button>
+            <button data-r="month">Month</button>
+            <button data-r="halfyear">6M</button>
+            <button data-r="year">Year</button>
+            <button data-r="all">All</button>
+          </div>
+        </div>
+        <div class="bars" id="s-bars"></div>
+        <div class="axis mono" id="s-axis" hidden><span></span><span></span></div>
+        <div class="caption mono" id="s-caption"></div>
+        <div class="legend">
+          <span><i style="background:var(--gold)"></i>All done</span>
+          <span><i style="background:var(--tier-green)"></i>75%+</span>
+          <span><i style="background:var(--tier-orange)"></i>50&ndash;74%</span>
+          <span><i style="background:var(--tier-red)"></i>Under 50%</span>
+        </div>
+      </div>
+    </div>
+    <h2 class="sec disp">Every habit</h2>
+    <div id="s-habits"></div>
+  </main>
+
+  <button class="fab" id="fab" aria-label="Add a habit">+</button>
+
+  <nav class="tabs">
+    <div class="tabs-inner">
+      <button class="tab active" data-tab="today">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/><path d="M20 15.5l-2.5 3.5L16 17.6" style="stroke-width:2.2"/></svg>Today
+      </button>
+      <button class="tab" data-tab="stats">
+        <svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Progress
+      </button>
+    </div>
+  </nav>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<!-- add / edit habit -->
+<section class="sheet" id="sheet-habit" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <h3 id="habit-title">New habit</h3>
+  <div class="field">
+    <label class="fl" for="h-name">What is it?</label>
+    <input type="text" id="h-name" placeholder="Cold shower" autocomplete="off" enterkeyhint="done">
+  </div>
+  <div class="field">
+    <label class="fl">How often?</label>
+    <div class="seg">
+      <button data-cad="daily" class="sel">Daily<em>Every day</em></button>
+      <button data-cad="weekly">Weekly<em>Shown daily, due Sunday</em></button>
+    </div>
+  </div>
+  <button class="btn" id="h-save">Save habit</button>
+  <button class="btn ghost" id="h-retire" hidden>Retire habit</button>
+  <p class="hint" id="h-retire-note" hidden>Retiring takes it off your feed and stops it counting from today, but keeps everything you've already done.</p>
+  <button class="btn danger" id="h-delete" hidden>Delete habit</button>
+  <button class="btn ghost" id="h-cancel">Cancel</button>
+</section>
+
+<!-- settings -->
+<section class="sheet" id="sheet-set" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <h3>Settings</h3>
+  <div class="switchrow">
+    <div>
+      <strong>Evening reminder</strong>
+      <p>Nudges you if anything is still unmarked.</p>
+    </div>
+    <button class="sw" id="sw-remind" aria-label="Toggle reminder"></button>
+  </div>
+  <div class="switchrow" style="border-bottom:0">
+    <div><strong>Reminder time</strong><p>Default 22:00.</p></div>
+    <input type="time" id="remind-time" value="22:00" style="width:132px">
+  </div>
+  <button class="btn ghost" id="test-notif">Send a test reminder</button>
+  <p class="hint" id="notif-hint"></p>
+  <h3 style="margin-top:26px">Backup</h3>
+  <button class="btn ghost" id="btn-file">Save a backup file</button>
+  <button class="btn ghost" id="btn-restore">Restore from a file</button>
+  <input type="file" id="file-in" accept="application/json,.json" style="display:none">
+  <p class="hint" id="backup-when"></p>
+  <button class="btn ghost" id="btn-export" style="margin-top:14px">Copy as text</button>
+  <button class="btn ghost" id="btn-import">Paste text to restore</button>
+  <button class="btn" id="set-close" style="margin-top:18px">Done</button>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------------- storage (localStorage, memory fallback) ---------------- */
+var mem = {};
+var store = {
+  get: function(k){ try{ return localStorage.getItem(k); }catch(e){ return mem[k] || null; } },
+  set: function(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k]=v; } }
+};
+var KEY = "dht.v1";
+
+var state = { habits: [], log: {}, remind: false, remindAt: "22:00", notified: "", range: "month" };
+try {
+  var raw = store.get(KEY);
+  if (raw) { var p = JSON.parse(raw); for (var k in p) state[k] = p[k]; }
+} catch(e){}
+function save(){ store.set(KEY, JSON.stringify(state)); }
+
+/* ---------------- dates ---------------- */
+var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var MON  = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function key(d){
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function addDays(d,n){ var x = new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate()+n); return x; }
+function today(){ var n = new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()); }
+function scheduled(h,d){ return h.cadence === "weekly" ? d.getDay() === 0 : true; }
+function startedBy(h,d){ return key(d) >= h.created; }
+function inRange(h,d){ var k = key(d); return k >= h.created && (!h.retiredOn || k <= h.retiredOn); }
+function mark(h,d){ var e = state.log[key(d)]; return e ? e[h.id] : undefined; }
+
+/* ---------------- elements ---------------- */
+var $ = function(id){ return document.getElementById(id); };
+var feed=$("feed"), tape=$("tape"), tapeLabel=$("tape-label"), weeklyNote=$("weekly-note");
+
+/* ---------------- today view ---------------- */
+// A weekly habit is shown every day but belongs to the Sunday that closes its week,
+// so a tick on Wednesday is stored against that Sunday and the stats stay unchanged.
+function weekAnchor(d){ return addDays(d, (7 - d.getDay()) % 7); }
+function anchorFor(h, d){ return h.cadence === "weekly" ? weekAnchor(d) : d; }
+function live(h){ return !h.retiredOn; }
+function dueOn(date){
+  return state.habits.filter(function(h){ return live(h) && scheduled(h,date) && startedBy(h,date); });
+}
+function todaysHabits(){ return dueOn(today()); }
+
+var BACKFILL_DAYS = 2;              // yesterday and the day before: a correction, not a rewrite
+var viewOffset = 0;                 // 0 = today, -1 = yesterday, -2 = the day before
+function viewDate(){ return addDays(today(), viewOffset); }
+
+function habitRow(h){
+  var v = viewDate(), t = today(), anchor = anchorFor(h,v), st = mark(h,anchor);
+  var row = document.createElement("div");
+  row.className = "row" + (st === "done" ? " is-done" : st === "missed" ? " is-missed" : st === "skip" ? " is-skipped" : "");
+
+  var meta;
+  if (h.cadence !== "weekly") meta = "Daily";
+  else if (v.getDay() === 0) meta = "Weekly &middot; due today";
+  else if (st) meta = "Weekly &middot; saved for Sunday";
+  else {
+    var till = (7 - v.getDay()) % 7;
+    meta = "Weekly &middot; due Sunday, " + till + (till === 1 ? " day" : " days");
+  }
+  if (viewOffset !== 0 && h.cadence === "weekly" && key(anchor) !== key(weekAnchor(t))) meta = "Weekly &middot; that week";
+
+  var main = document.createElement("button");
+  main.className = "row-main";
+  main.innerHTML = '<div class="row-name"></div><div class="row-meta mono">' + meta + '</div>';
+  main.querySelector(".row-name").textContent = h.name;
+  main.onclick = function(){ openHabit(h); };
+
+  var stamps = document.createElement("div");
+  stamps.className = "stamps";
+  stamps.appendChild(stampBtn(h, "done", st, anchor));
+  stamps.appendChild(stampBtn(h, "skip", st, anchor));
+  stamps.appendChild(stampBtn(h, "missed", st, anchor));
+
+  row.appendChild(main); row.appendChild(stamps);
+  return row;
+}
+
+function renderToday(){
+  var v = viewDate(), t = today();
+  $("dayname").textContent = DAYS[v.getDay()];
+  $("datestamp").textContent = String(v.getDate()).padStart(2,"0") + " " + MON[v.getMonth()].toUpperCase() + " " + v.getFullYear() +
+    (viewOffset !== 0 ? " \u00b7 FILLING IN" : "");
+  $("datestamp").className = "datestamp mono" + (viewOffset !== 0 ? " past" : "");
+  $("day-prev").disabled = viewOffset <= -BACKFILL_DAYS;
+  $("day-next").disabled = viewOffset >= 0;
+
+  var all = state.habits.filter(function(h){ return live(h) && startedBy(h,v); });
+  var dailies = all.filter(function(h){ return h.cadence !== "weekly"; });
+  var weeklies = all.filter(function(h){ return h.cadence === "weekly"; });
+
+  feed.innerHTML = "";
+  if (!state.habits.filter(live).length){
+    feed.innerHTML = '<div class="empty"><span class="disp">Nothing in your routine yet.</span>Tap + to add the first one.</div>';
+  } else if (!all.length){
+    feed.innerHTML = '<div class="empty"><span class="disp">Nothing was being tracked yet.</span>Your habits start from the day you added them.</div>';
+  }
+  dailies.forEach(function(h){ feed.appendChild(habitRow(h)); });
+  if (weeklies.length){
+    var div = document.createElement("div");
+    div.className = "divider mono";
+    div.innerHTML = '<span>This week</span>';
+    feed.appendChild(div);
+    weeklies.forEach(function(h){ feed.appendChild(habitRow(h)); });
+  }
+
+  // progress tape covers what's actually owed that day: dailies, plus weeklies once Sunday arrives
+  var list = dueOn(v);
+  tape.innerHTML = "";
+  var done = 0, marked = 0, skipped = 0;
+  list.forEach(function(h){
+    var st = mark(h,anchorFor(h,v)), i = document.createElement("i");
+    if (st === "done"){ i.className = "done"; done++; marked++; }
+    else if (st === "missed"){ i.className = "missed"; marked++; }
+    else if (st === "skip"){ i.className = "skip"; skipped++; marked++; }
+    tape.appendChild(i);
+  });
+  if (!list.length) tape.innerHTML = '<i></i>';
+  var extra = skipped ? " \u00b7 " + skipped + " skipped" : "";
+  tapeLabel.textContent = list.length
+    ? (marked === list.length
+        ? done + " of " + (list.length - skipped) + " done \u00b7 log complete" + extra
+        : marked + " of " + list.length + " logged" + extra)
+    : "";
+  $("eyebrow-txt").textContent = viewOffset === 0
+    ? ((list.length && marked === list.length) ? "Today \u00b7 all logged" : "Today")
+    : (viewOffset === -1 ? "Yesterday" : DAYS[v.getDay()].slice(0,3) + " " + v.getDate() + " " + MON[v.getMonth()]);
+
+  var pending = weeklies.filter(function(h){ return !mark(h, weekAnchor(v)); }).length;
+  if (pending && v.getDay() !== 0 && viewOffset === 0){
+    var days = (7 - v.getDay()) % 7;
+    weeklyNote.hidden = false;
+    weeklyNote.textContent = pending + (pending === 1 ? " weekly habit is" : " weekly habits are") +
+      " still open \u2014 " + days + (days === 1 ? " day" : " days") + " until Sunday. Tick it whenever it happens.";
+  } else weeklyNote.hidden = true;
+}
+
+$("day-prev").onclick = function(){ if (viewOffset > -BACKFILL_DAYS){ viewOffset--; renderToday(); } };
+$("day-next").onclick = function(){ if (viewOffset < 0){ viewOffset++; renderToday(); } };
+
+function stampBtn(h, kind, current, anchor){
+  var b = document.createElement("button");
+  var cls = { done:" on-done", missed:" on-missed", skip:" on-skip" };
+  b.className = "stamp" + (current === kind ? cls[kind] : "");
+  b.setAttribute("aria-label",
+    (kind === "done" ? "Mark done: " : kind === "missed" ? "Mark not done: " : "Skip today, streak held: ") + h.name);
+  b.innerHTML =
+    kind === "done"   ? '<svg viewBox="0 0 24 24"><path d="M4 12.5l5.5 5.5L20 6"/></svg>' :
+    kind === "missed" ? '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>' :
+                        '<svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>';
+  b.onclick = function(){
+    var k = key(anchor || today());
+    if (!state.log[k]) state.log[k] = {};
+    if (state.log[k][h.id] === kind) delete state.log[k][h.id];
+    else state.log[k][h.id] = kind;
+    if (!Object.keys(state.log[k]).length) delete state.log[k];
+    save();
+    b.classList.add("pressed");
+    renderToday();
+  };
+  return b;
+}
+
+/* ---------------- stats ---------------- */
+function habitStats(h, windowDays){
+  var t = today(), sched = 0, done = 0, missed = 0, skipped = 0;
+  for (var i = 0; i < windowDays; i++){
+    var d = addDays(t, -i);
+    if (!scheduled(h,d) || !inRange(h,d)) continue;
+    var m = mark(h,d);
+    if (m === "skip"){ skipped++; continue; }   // a skipped day is out of the reckoning entirely
+    sched++;
+    if (m === "done") done++; else if (m === "missed") missed++;
+  }
+  return { sched: sched, done: done, missed: missed, skipped: skipped, pct: sched ? Math.round(done / sched * 100) : 0 };
+}
+function habitStreak(h){
+  var d = today(), n = 0, guard = 0;
+  if (scheduled(h,d) && inRange(h,d)){
+    var m0 = mark(h,d);
+    if (m0 === "missed") return 0;
+    if (m0 !== "done" && m0 !== "skip") d = addDays(d,-1);   // today simply isn't logged yet
+  }
+  while (guard++ < 3000){
+    if (key(d) < h.created) break;
+    if (!scheduled(h,d) || !inRange(h,d)){ d = addDays(d,-1); continue; }
+    var m = mark(h,d);
+    if (m === "done"){ n++; d = addDays(d,-1); continue; }
+    if (m === "skip"){ d = addDays(d,-1); continue; }        // holds the streak without extending it
+    break;
+  }
+  return n;
+}
+function perfectStreak(){
+  var d = today(), n = 0, guard = 0;
+  function dayDone(day){
+    var due = state.habits.filter(function(h){
+      return scheduled(h,day) && inRange(h,day) && mark(h,day) !== "skip";
+    });
+    if (!due.length) return null;   // nothing counted that day, so it neither breaks nor builds
+    return due.every(function(h){ return mark(h,day) === "done"; });
+  }
+  if (dayDone(d) !== true) d = addDays(d,-1);
+  while (guard++ < 800){
+    var r = dayDone(d);
+    if (r === null){ d = addDays(d,-1); continue; }
+    if (r){ n++; d = addDays(d,-1); } else break;
+  }
+  return n;
+}
+function bestStreak(h){
+  var p = h.created.split("-"), d = new Date(+p[0], +p[1]-1, +p[2]), t = today();
+  var run = 0, best = 0, guard = 0, tk = key(t);
+  while (key(d) <= tk && guard++ < 4000){
+    if (scheduled(h,d) && inRange(h,d)){
+      var m = mark(h,d);
+      if (m === "done"){ run++; if (run > best) best = run; }
+      else if (m === "skip"){ /* held: neither extends nor ends the run */ }
+      else if (key(d) !== tk) run = 0;   // an unlogged today shouldn't end a run
+    }
+    d = addDays(d,1);
+  }
+  return Math.max(best, habitStreak(h));
+}
+
+/* ---------------- completion chart ---------------- */
+var RANGE_LABEL = { week:"This week", month:"Last 30 days", halfyear:"Last 6 months", year:"Last 12 months", all:"All time" };
+
+function dayTotals(d){
+  var s = 0, dn = 0;
+  state.habits.forEach(function(h){
+    if (!scheduled(h,d) || !inRange(h,d)) return;
+    var m = mark(h,d);
+    if (m === "skip") return;
+    s++; if (m === "done") dn++;
+  });
+  return { sched:s, done:dn };
+}
+function firstTracked(){
+  var min = null;
+  state.habits.forEach(function(h){ if (!min || h.created < min) min = h.created; });
+  for (var k in state.log){ if (!min || k < min) min = k; }
+  if (!min) return today();
+  var p = min.split("-");
+  return new Date(+p[0], +p[1]-1, +p[2]);
+}
+function aggregate(start, end){
+  var t = today(), stop = key(end) > key(t) ? t : end;
+  var d = new Date(start.getTime()), s = 0, dn = 0, guard = 0;
+  while (key(d) <= key(stop) && guard++ < 400){
+    var r = dayTotals(d); s += r.sched; dn += r.done; d = addDays(d,1);
+  }
+  return { sched:s, done:dn };
+}
+function buildBuckets(range){
+  var t = today(), out = [], i, n;
+
+  function daily(count){
+    for (i = count-1; i >= 0; i--){
+      var d = addDays(t,-i);
+      out.push({ start:d, end:d, day:d,
+        label: count <= 7 ? "SMTWTFS".charAt(d.getDay())
+             : (i === 0 ? "now" : (i % 7 === 0 ? String(d.getDate()) : "")),
+        title: DAYS[d.getDay()].slice(0,3) + " " + d.getDate() + " " + MON[d.getMonth()] });
+    }
+  }
+  function weekly(count){
+    var wk = addDays(t, -t.getDay());
+    for (i = count-1; i >= 0; i--){
+      var s = addDays(wk, -7*i);
+      out.push({ start:s, end:addDays(s,6),
+        label: i === 0 ? "now" : (s.getDate() <= 7 ? MON[s.getMonth()] : ""),
+        title: "Week of " + s.getDate() + " " + MON[s.getMonth()] });
+    }
+  }
+  function monthly(count, showYear){
+    for (i = count-1; i >= 0; i--){
+      var s = new Date(t.getFullYear(), t.getMonth()-i, 1);
+      var e = new Date(s.getFullYear(), s.getMonth()+1, 0);
+      var show = count <= 8 || (i % 2 === 0);
+      out.push({ start:s, end:e,
+        label: !show ? "" : (showYear && s.getMonth() === 0 ? "'" + String(s.getFullYear()).slice(2) : MON[s.getMonth()]),
+        title: MON[s.getMonth()] + " " + s.getFullYear() });
+    }
+  }
+
+  if (range === "week") daily(7);
+  else if (range === "month") daily(30);
+  else if (range === "halfyear") weekly(26);
+  else if (range === "year") monthly(12);
+  else {
+    var f = firstTracked(), span = Math.round((t - f) / 86400000);
+    if (span <= 13) daily(span + 1);
+    else if (span <= 180) weekly(Math.ceil((span + t.getDay() + 1) / 7));
+    else {
+      n = (t.getFullYear() - f.getFullYear()) * 12 + (t.getMonth() - f.getMonth()) + 1;
+      monthly(Math.min(n, 60), true);
+    }
+  }
+  return out;
+}
+function renderChart(){
+  var range = state.range || "month";
+  document.querySelectorAll("#s-range button").forEach(function(b){ b.classList.toggle("sel", b.dataset.r === range); });
+  $("s-chart-label").textContent = RANGE_LABEL[range] || "Completion";
+
+  var buckets = buildBuckets(range), bars = $("s-bars");
+  bars.style.setProperty("--bar-gap", buckets.length <= 8 ? "6px" : buckets.length <= 16 ? "4px" : "2px");
+  bars.innerHTML = "";
+
+  // past ~14 bars the columns are too narrow for a legible label, so the ends carry the axis
+  var dense = buckets.length > 14, axis = $("s-axis");
+  axis.hidden = !dense;
+  if (dense && buckets.length){
+    axis.children[0].textContent = buckets[0].title;
+    axis.children[1].textContent = "now";
+  }
+
+  var totS = 0, totD = 0;
+  buckets.forEach(function(bk){
+    var a = bk.day ? dayTotals(bk.day) : aggregate(bk.start, bk.end);
+    totS += a.sched; totD += a.done;
+    var pct = a.sched ? a.done / a.sched : 0;
+
+    var col = document.createElement("button");
+    col.type = "button";
+    col.setAttribute("aria-label", bk.title + ", " + Math.round(pct*100) + " percent done");
+    var b = document.createElement("b");
+    b.style.height = (a.sched ? Math.max(3, pct * 78) : 2) + "px";
+    b.className = !a.sched ? "thin"
+                : pct >= 1    ? "gold"
+                : pct >= 0.75 ? "green"
+                : pct >= 0.5  ? "orange"
+                :               "red";
+    var lab = document.createElement("span");
+    lab.textContent = dense ? "" : bk.label;
+    col.appendChild(b); col.appendChild(lab);
+    col.onclick = function(){
+      toast(bk.title + " \u00b7 " + (a.sched ? Math.round(pct*100) + "% (" + a.done + "/" + a.sched + ")" : "nothing scheduled"));
+    };
+    bars.appendChild(col);
+  });
+
+  $("s-caption").textContent = totS
+    ? Math.round(totD/totS*100) + "% done \u00b7 " + totD + " of " + totS + " stamped \u00b7 tap a bar for detail"
+    : "Nothing scheduled in this range yet.";
+}
+document.querySelectorAll("#s-range button").forEach(function(b){
+  b.onclick = function(){ state.range = b.dataset.r; save(); renderChart(); };
+});
+
+function renderStats(){
+  var t = today(), sched = 0, done = 0;
+  state.habits.forEach(function(h){ var s = habitStats(h,30); sched += s.sched; done += s.done; });
+  $("s-rate").innerHTML = (sched ? Math.round(done/sched*100) : 0) + '<small>%</small>';
+  var ps = perfectStreak();
+  $("s-streak").textContent = ps;
+  $("s-streak-l").textContent = ps === 1 ? "Day everything done" : "Days everything done";
+
+  renderChart();
+
+  var wrap = $("s-habits"); wrap.innerHTML = "";
+  if (!state.habits.length){
+    wrap.innerHTML = '<div class="empty" style="margin-top:8px">Add a habit and your record shows up here.</div>';
+    return;
+  }
+
+  function habitCard(h){
+    var retired = !!h.retiredOn;
+    // a retired habit's tape ends on its last active day, not today
+    var end = retired ? new Date(+h.retiredOn.split("-")[0], +h.retiredOn.split("-")[1]-1, +h.retiredOn.split("-")[2]) : t;
+    var s30 = habitStats(h,30), all = habitStats(h,3650), streak = habitStreak(h), best = bestStreak(h);
+    var unit = h.cadence === "weekly" ? "wk" : "d";
+    var headline = retired ? all.pct : s30.pct;
+
+    var el = document.createElement("div");
+    el.className = "hrow" + (retired ? " retired" : "");
+    el.setAttribute("role","button");
+    el.setAttribute("tabindex","0");
+    el.innerHTML =
+      '<div class="hrow-top"><div class="hrow-name"></div><div class="hrow-pct mono">' + headline + '%</div></div>' +
+      '<div class="ticks"></div>' +
+      '<div class="hrow-sub mono"><span>' +
+        (retired ? "Retired " + end.getDate() + " " + MON[end.getMonth()] : (h.cadence === "weekly" ? "Weekly" : "Daily")) +
+        ' \u00b7 ' + (retired ? "best " + best + unit : "streak " + streak + unit + " \u00b7 best " + best + unit) +
+      '</span><span>' +
+        all.done + ' \u2713 \u00b7 ' + all.missed + ' \u2715' +
+        (all.skipped ? ' \u00b7 ' + all.skipped + ' skipped' : '') + '</span></div>';
+    el.querySelector(".hrow-name").textContent = h.name;
+
+    var ticks = el.querySelector(".ticks");
+    var step = h.cadence === "weekly" ? 7 : 1, count = h.cadence === "weekly" ? 10 : 14;
+    for (var i = count-1; i >= 0; i--){
+      var d = addDays(end, -i*step);
+      if (h.cadence === "weekly"){ while (d.getDay() !== 0) d = addDays(d,-1); }
+      var m = mark(h,d), n = document.createElement("i");
+      if (!inRange(h,d)) n.className = "off";
+      else if (m === "done") n.className = "d";
+      else if (m === "missed") n.className = "m";
+      else if (m === "skip") n.className = "s";
+      n.title = key(d);
+      ticks.appendChild(n);
+    }
+    el.onclick = function(){ openHabit(h); };
+    el.onkeydown = function(e){ if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openHabit(h); } };
+    return el;
+  }
+
+  var activeH = state.habits.filter(function(h){ return !h.retiredOn; });
+  var retiredH = state.habits.filter(function(h){ return !!h.retiredOn; });
+  activeH.forEach(function(h){ wrap.appendChild(habitCard(h)); });
+  if (retiredH.length){
+    var head = document.createElement("h2");
+    head.className = "sec disp";
+    head.textContent = "Retired";
+    wrap.appendChild(head);
+    retiredH.forEach(function(h){ wrap.appendChild(habitCard(h)); });
+  }
+}
+
+/* ---------------- tabs ---------------- */
+var tabs = document.querySelectorAll(".tab");
+tabs.forEach(function(btn){
+  btn.onclick = function(){
+    tabs.forEach(function(b){ b.classList.remove("active"); });
+    btn.classList.add("active");
+    var t = btn.dataset.tab;
+    $("v-today").hidden = t !== "today";
+    $("v-stats").hidden = t !== "stats";
+    if (t === "stats") renderStats(); else { viewOffset = 0; renderToday(); }
+    window.scrollTo(0,0);
+  };
+});
+
+/* ---------------- sheets ---------------- */
+var scrim = $("scrim"), sheetH = $("sheet-habit"), sheetS = $("sheet-set"), editing = null, cadence = "daily";
+function refresh(){ renderToday(); if (!$("v-stats").hidden) renderStats(); }
+function openSheet(s){ scrim.classList.add("open"); s.classList.add("open"); }
+function closeSheets(){ scrim.classList.remove("open"); sheetH.classList.remove("open"); sheetS.classList.remove("open"); }
+scrim.onclick = closeSheets;
+$("h-cancel").onclick = closeSheets;
+$("set-close").onclick = closeSheets;
+
+function setCad(c){
+  cadence = c;
+  document.querySelectorAll(".seg button").forEach(function(b){ b.classList.toggle("sel", b.dataset.cad === c); });
+}
+document.querySelectorAll(".seg button").forEach(function(b){ b.onclick = function(){ setCad(b.dataset.cad); }; });
+
+$("fab").onclick = function(){
+  editing = null;
+  $("habit-title").textContent = "New habit";
+  $("h-name").value = "";
+  $("h-delete").hidden = true;
+  $("h-retire").hidden = true;
+  $("h-retire-note").hidden = true;
+  setCad("daily");
+  openSheet(sheetH);
+  setTimeout(function(){ $("h-name").focus(); }, 320);
+};
+function openHabit(h){
+  editing = h;
+  $("habit-title").textContent = h.retiredOn ? "Retired habit" : "Edit habit";
+  $("h-name").value = h.name;
+  $("h-delete").hidden = false;
+  $("h-retire").hidden = false;
+  $("h-retire").textContent = h.retiredOn ? "Put it back on my feed" : "Retire habit";
+  $("h-retire").className = "btn ghost";
+  $("h-retire-note").hidden = !!h.retiredOn;
+  setCad(h.cadence);
+  openSheet(sheetH);
+}
+$("h-retire").onclick = function(){
+  if (!editing) return;
+  if (editing.retiredOn){
+    delete editing.retiredOn;
+    save(); closeSheets(); refresh(); toast("Back on your feed");
+  } else {
+    editing.retiredOn = key(today());
+    save(); closeSheets(); refresh(); toast("Retired \u2014 its record is kept");
+  }
+};
+$("h-save").onclick = function(){
+  var name = $("h-name").value.trim();
+  if (!name){ toast("Give it a name first"); $("h-name").focus(); return; }
+  if (editing){ editing.name = name; editing.cadence = cadence; }
+  else state.habits.push({ id: "h" + Date.now() + Math.floor(Math.random()*999), name: name, cadence: cadence, created: key(today()) });
+  save(); closeSheets(); refresh();
+  toast(editing ? "Habit updated" : "Habit added");
+};
+$("h-delete").onclick = function(){
+  if (!editing) return;
+  if (!confirm('Delete "' + editing.name + '" and its history?')) return;
+  var id = editing.id;
+  state.habits = state.habits.filter(function(h){ return h.id !== id; });
+  for (var d in state.log){ delete state.log[d][id]; if (!Object.keys(state.log[d]).length) delete state.log[d]; }
+  save(); closeSheets(); refresh(); toast("Habit deleted");
+};
+$("h-name").addEventListener("keydown", function(e){ if (e.key === "Enter") $("h-save").click(); });
+
+/* ---------------- settings ---------------- */
+$("btn-settings").onclick = function(){
+  $("sw-remind").classList.toggle("on", !!state.remind);
+  $("remind-time").value = state.remindAt;
+  notifHint();
+  backupWhen();
+  openSheet(sheetS);
+};
+function notifHint(){
+  var el = $("notif-hint"), p = ("Notification" in window) ? Notification.permission : "unsupported";
+  if (p === "unsupported") el.innerHTML = "This browser can't show reminders. Add the app to your Home Screen first, then try again.";
+  else if (p === "denied") el.innerHTML = "Reminders are blocked. Turn them back on in <b>iPhone Settings \u2192 Notifications \u2192 Daily Habits</b>.";
+  else if (p === "granted") el.innerHTML = "iPhone only delivers this while the app is open. For a nudge that always lands, add a <b>Shortcuts</b> personal automation at " + state.remindAt + " that opens Daily Habits.";
+  else el.innerHTML = "Turn the switch on to allow reminders.";
+}
+$("sw-remind").onclick = function(){
+  var sw = this;
+  if (state.remind){ state.remind = false; sw.classList.remove("on"); save(); notifHint(); return; }
+  if (!("Notification" in window)){ toast("Reminders aren't available here"); return; }
+  Notification.requestPermission().then(function(p){
+    if (p === "granted"){ state.remind = true; sw.classList.add("on"); toast("Reminder on"); }
+    else toast("Permission not given");
+    save(); notifHint();
+  });
+};
+$("remind-time").onchange = function(){ state.remindAt = this.value || "22:00"; save(); notifHint(); };
+$("test-notif").onclick = function(){ fire(true); };
+
+function backupName(){
+  var t = today();
+  return "daily-habits-" + key(t) + ".json";
+}
+function backupWhen(){
+  var el = $("backup-when");
+  if (!state.lastBackup){ el.innerHTML = "No backup saved yet. A file keeps your record safe if this phone is wiped or replaced."; return; }
+  var p = state.lastBackup.split("-"), d = new Date(+p[0], +p[1]-1, +p[2]);
+  var days = Math.round((today() - d) / 86400000);
+  el.innerHTML = "Last backup saved <b>" + d.getDate() + " " + MON[d.getMonth()] + "</b>" +
+    (days > 60 ? " \u2014 worth saving a fresh one." : ".");
+}
+function markBackedUp(){ state.lastBackup = key(today()); save(); backupWhen(); }
+
+$("btn-file").onclick = function(){
+  var json = JSON.stringify(state, null, 2), name = backupName();
+  try {
+    var file = new File([json], name, { type: "application/json" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      navigator.share({ files: [file], title: "Daily Habits backup" })
+        .then(markBackedUp)
+        .catch(function(){ /* user cancelled the share sheet */ });
+      return;
+    }
+  } catch(e){}
+  try {
+    var url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+    var a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    markBackedUp();
+    toast("Backup file saved");
+  } catch(e){
+    prompt("Copy your backup:", json);
+  }
+};
+$("btn-restore").onclick = function(){ $("file-in").click(); };
+$("file-in").onchange = function(){
+  var f = this.files && this.files[0];
+  this.value = "";
+  if (!f) return;
+  var r = new FileReader();
+  r.onload = function(){
+    try {
+      var p = JSON.parse(r.result);
+      if (!p || !p.habits) throw 0;
+      if (!confirm("Restore " + p.habits.length + " habits from this file? It replaces everything currently saved.")) return;
+      state = p; save(); closeSheets(); refresh(); toast("Backup restored");
+    } catch(e){ toast("That file couldn't be read"); }
+  };
+  r.onerror = function(){ toast("That file couldn't be read"); };
+  r.readAsText(f);
+};
+
+$("btn-export").onclick = function(){
+  var txt = JSON.stringify(state);
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){ markBackedUp(); toast("Data copied to clipboard"); }, function(){ prompt("Copy your backup:", txt); });
+  else prompt("Copy your backup:", txt);
+};
+$("btn-import").onclick = function(){
+  var txt = prompt("Paste a backup. This replaces everything currently saved.");
+  if (!txt) return;
+  try {
+    var p = JSON.parse(txt);
+    if (!p.habits) throw 0;
+    state = p; save(); closeSheets(); refresh(); toast("Backup restored");
+  } catch(e){ toast("That backup couldn't be read"); }
+};
+
+/* ---------------- reminder ---------------- */
+function fire(test){
+  if (!("Notification" in window) || Notification.permission !== "granted"){
+    if (test) toast("Turn reminders on first");
+    return;
+  }
+  var t = today(), list = todaysHabits();
+  var left = list.filter(function(h){ return !mark(h,t); }).length;
+  var body = test
+    ? "This is what your 22:00 nudge looks like."
+    : left + (left === 1 ? " habit is" : " habits are") + " still unmarked for today.";
+  try { new Notification("Daily Habits Tracker", { body: body, tag: "dht-" + key(t) }); }
+  catch(e){ if (test) toast("Reminder blocked by the browser"); }
+}
+function checkReminder(){
+  if (!state.remind) return;
+  var t = today(), k = key(t);
+  if (state.notified === k) return;
+  var now = new Date(), parts = (state.remindAt || "22:00").split(":");
+  var due = new Date(t.getFullYear(), t.getMonth(), t.getDate(), +parts[0], +parts[1]);
+  if (now < due) return;
+  var list = todaysHabits();
+  if (!list.length || list.every(function(h){ return !!mark(h,t); })) return;
+  fire(false);
+  state.notified = k; save();
+}
+setInterval(checkReminder, 30000);
+document.addEventListener("visibilitychange", function(){ if (!document.hidden){ viewOffset = 0; renderToday(); checkReminder(); } });
+
+/* ---------------- toast + boot ---------------- */
+var toastEl = $("toast"), toastT;
+function toast(msg){
+  toastEl.textContent = msg; toastEl.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.classList.remove("show"); }, 1900);
+}
+
+// seed a first-run example so the app isn't a blank wall
+if (!state.habits.length && !store.get(KEY)){
+  state.habits = [
+    { id:"h_ex1", name:"Exercise", cadence:"daily", created:key(today()) },
+    { id:"h_ex2", name:"Cold shower", cadence:"daily", created:key(today()) },
+    { id:"h_ex3", name:"Plan the week", cadence:"weekly", created:key(today()) }
+  ];
+  save();
+}
+
+renderToday();
+checkReminder();
+})();
+</script>
+</body>
+</html>
